@@ -1,5 +1,4 @@
-const { OpenAI } = require('openai');
-const { Readable } = require('stream');
+const { OpenAI, toFile } = require('openai');
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -40,9 +39,9 @@ function scoreWords(targetPhrase, transcript) {
     if (close) {
       return { word, confidence: 0.75 };
     }
-    // 部分符合（長字包含短字）
+    // 部分符合（長字包含短字，排除空字串誤判）
     const partial = spokenWords.find(
-      (sw) => sw.includes(word) || word.includes(sw)
+      (sw) => sw.length > 0 && (sw.includes(word) || word.includes(sw))
     );
     if (partial && word.length > 3) {
       return { word, confidence: 0.55 };
@@ -59,11 +58,8 @@ function scoreWords(targetPhrase, transcript) {
  * @returns {{ transcript, confidence, wordConfidence[], score, missedWords[] }}
  */
 async function transcribeAudio({ audioBase64, targetPhrase }) {
-  // Base64 → Buffer → File
   const buffer = Buffer.from(audioBase64, 'base64');
-
-  // OpenAI SDK 需要 File-like 物件
-  const file = new File([buffer], 'audio.webm', { type: 'audio/webm' });
+  const file = await toFile(buffer, 'audio.webm', { type: 'audio/webm' });
 
   const transcription = await openai.audio.transcriptions.create({
     file,
@@ -72,9 +68,8 @@ async function transcribeAudio({ audioBase64, targetPhrase }) {
     response_format: 'text',
   });
 
-  const transcript = typeof transcription === 'string'
-    ? transcription.trim()
-    : (transcription.text || '').trim();
+  const transcript = (typeof transcription === 'string' ? transcription : transcription.text ?? '').trim();
+  console.log('[Whisper] transcript:', transcript);
 
   // 逐字評分
   const wordConfidence = scoreWords(targetPhrase, transcript);
