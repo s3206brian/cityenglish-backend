@@ -96,4 +96,30 @@ async function getUserProgress(userId) {
   };
 }
 
-module.exports = { saveSession, getUserProgress };
+/**
+ * 城市排行榜：該城市內最高分前 20 名
+ * @param {string} city  e.g. '台東' | '台南' | '花蓮'
+ */
+async function getCityLeaderboard(city) {
+  const res = await pool.query(
+    `SELECT
+       au.id                                              AS user_id,
+       COALESCE(au.raw_user_meta_data->>'full_name',
+                au.email)                                AS display_name,
+       au.raw_user_meta_data->>'avatar_url'              AS avatar_url,
+       MAX(ps.score)                                     AS best_score,
+       COUNT(*)::int                                     AS attempt_count,
+       MAX(ps.created_at)                                AS last_practiced
+     FROM practice_sessions ps
+     JOIN auth.users         au ON au.id = ps.user_id
+     JOIN locations           l  ON l.id  = ps.location_id
+     WHERE l.city = $1
+     GROUP BY au.id, au.raw_user_meta_data, au.email
+     ORDER BY best_score DESC, attempt_count DESC
+     LIMIT 20`,
+    [city]
+  );
+  return res.rows;
+}
+
+module.exports = { saveSession, getUserProgress, getCityLeaderboard };

@@ -80,4 +80,22 @@ router.get('/user-progress/:userId', requireAuth, async (req, res, next) => {
   }
 });
 
+/**
+ * GET /api/leaderboard/:city
+ * city = taitung | tainan | hualien
+ */
+const CITY_NAME_MAP = { taitung: '台東', tainan: '台南', hualien: '花蓮' };
+
+router.get('/leaderboard/:city', async (req, res, next) => {
+  try {
+    const { getCityLeaderboard } = require('../db/sessionRepository');
+    const cityZh = CITY_NAME_MAP[req.params.city];
+    if (!cityZh) return res.status(400).json({ error: 'Unknown city' });
+    const rows = await getCityLeaderboard(cityZh);
+    res.json(rows);
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;
