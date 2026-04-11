@@ -1,11 +1,9 @@
 const { Pool } = require('pg');
 
+// Supabase 要求 SSL；DATABASE_URL 有設定時一律啟用
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl:
-    process.env.NODE_ENV === 'production'
-      ? { rejectUnauthorized: false }
-      : false,
+  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
 });
 
 /**
