@@ -40,6 +40,7 @@ router.post(
 
       // 儲存練習記錄（需登入）
       let sessionId = null;
+      let saveError = null;
       if (userId) {
         try {
           sessionId = await saveSession({
@@ -50,12 +51,16 @@ router.post(
             score,
             wordConfidence,
           });
+          console.log('[saveSession] ok, sessionId:', sessionId);
         } catch (saveErr) {
+          saveError = saveErr.message;
           console.error('[saveSession error]', saveErr.message);
         }
+      } else {
+        console.log('[saveSession] skipped: no userId');
       }
 
-      return res.json({ transcript, confidence, wordConfidence, missedWords, score, sessionId });
+      return res.json({ transcript, confidence, wordConfidence, missedWords, score, sessionId, saveError });
     } catch (err) {
       next(err);
     }
