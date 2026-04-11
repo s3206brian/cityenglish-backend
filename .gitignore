@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+.env.local
+
+# Google Cloud service account key
+*-service-account*.json
+service-account*.json
+gcp-key*.json
+
+# Logs
+*.log
+logs/
+
+# Build
+dist/
+
+# OS
+.DS_Store
