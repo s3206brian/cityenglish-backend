@@ -1,3 +1,8 @@
+// Node 18 does not expose File as a global; polyfill before openai SDK checks for it
+if (!globalThis.File) {
+  globalThis.File = require('node:buffer').File;
+}
+
 const { OpenAI, toFile } = require('openai');
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
